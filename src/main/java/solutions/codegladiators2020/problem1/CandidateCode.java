@@ -3,15 +3,16 @@ package solutions.codegladiators2020.problem1;/*
  * Your class should be named solutions.practice.problem1.CandidateCode.
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class CandidateCode {
+    private static HashSet<Long> make = null;
+
     public static void main(String[] args) throws Exception {
         try {
-            ArrayList<TestCase> testCases = acceptInput();
-            testCases.forEach(TestCase::process);
+            acceptInput();
+            System.out.println(make.stream().min(Long::compareTo).get());
         } catch (Exception ex) {
             System.out.println("Exception while running solution :: " + ex.getMessage());
             ex.printStackTrace();
@@ -19,87 +20,26 @@ public class CandidateCode {
         }
     }
 
-    public static ArrayList<TestCase> acceptInput() throws Exception {
-        Scanner scanner = new Scanner(System.in);
-        int testCaseCount = Integer.parseInt(scanner.nextLine());
-        if (testCaseCount < 1 || testCaseCount > 10) {
-            throw new Exception("Input contract violation :: 1<=testCaseCount<=10");
-        }
-        ArrayList<TestCase> testCases = new ArrayList<>(testCaseCount);
-        int empCount = 0;
-        String empNames;
-        for (int i = 0; scanner.hasNext(); i++) {
+    public static void acceptInput() throws Exception {
+        try (Scanner scanner = new Scanner(System.in)) {
             String line = scanner.nextLine();
-            if (i % 2 == 0) {
-                empCount = Integer.parseInt(line);
-            } else {
-                empNames = line;
-                TestCase testCase = new TestCase(empCount, empNames);
-                testCases.add(testCase);
+            int n = Integer.parseInt(line);
+            if (n < 1 || n > 10000000) {
+                throw new Exception("Input contract violation :: 1<= N <=10000000 (1e7)");
             }
-        }
-        if (testCaseCount != testCases.size()) {
-            throw new Exception("testCaseCount should match the number of testcases that follow");
-        }
-        return testCases;
-    }
-
-    private static final class TestCase {
-        private int empCount;
-        private String empNames;
-        private boolean isValid;
-        private char[] anagram;
-        private HashMap<Character, Integer> trace;
-        private char lonely;
-
-        public TestCase(int empCount, String empNames) {
-            this.empCount = empCount;
-            this.empNames = empNames;
-            isValid = false;
-            lonely = 0;
-        }
-
-        public void process() {
-            validate();
-            if (isValid) {
-                play();
-                println();
-            }
-        }
-
-        public void println() {
-            System.out.println(String.valueOf(anagram));
-            System.out.println("I am Alone " + lonely);
-        }
-
-        private void validate() {
-            if (!(empNames == null || empNames.length() == 0 || empNames.length() > 1000)) {
-                if (!(empCount < 3 || empCount > 1001)) {
-                    isValid = true;
-                    anagram = new char[empCount];
-                    trace = new HashMap<>(empCount);
+            make = new HashSet<>(n);
+            line = scanner.nextLine();
+            String[] reqQuants = line.split(" ");
+            line = scanner.nextLine();
+            String[] availQuants = line.split(" ");
+            for (int i = 0; i < n; i++) {
+                long reqQuant = Long.parseLong(reqQuants[i]);
+                long availQuant = Long.parseLong(availQuants[i]);
+                if (reqQuant < 0 || availQuant < 0) {
+                    throw new Exception("Input contract violation :: 0<= Quantity_of_ingredient <= LONG_MAX");
                 }
+                make.add(availQuant / reqQuant);
             }
         }
-
-        private void play() {
-            String[] names = empNames.split(" ");
-            for (int j = 0; j < names.length; j++) {
-                char x = names[j].charAt(0);
-                anagram[j] = x;
-                if (!trace.containsKey(x)) {
-                    trace.put(x, 1);
-                } else {
-                    int k = trace.get(x);
-                    trace.put(x, k + 1);
-                }
-            }
-            trace.forEach((k, v) -> {
-                if (v == 1) {
-                    lonely = k;
-                }
-            });
-        }
-
     }
 }
