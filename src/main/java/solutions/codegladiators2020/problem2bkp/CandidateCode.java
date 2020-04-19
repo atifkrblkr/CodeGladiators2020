@@ -1,31 +1,15 @@
-package solutions.codegladiators2020.problem2;/*
+package solutions.codegladiators2020.problem2bkp;/*
  * Enter your code here. Read input from STDIN. Print your output to STDOUT.
  * Your class should be named solutions.practice.problem1.CandidateCode.
  */
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.*;
 
 public class CandidateCode {
     public static void main(String[] args) throws Exception {
         try {
-            ArrayList<TestCaseWorker> testCaseWorkers = acceptInput();
-            ExecutorService executorService = Executors.newFixedThreadPool(10);
-            List<Future<TestCase>> processedTestCases = executorService.invokeAll(testCaseWorkers);
-            executorService.awaitTermination(800, TimeUnit.MILLISECONDS);
-            executorService.shutdown();
-            ArrayList<TestCase> testCases = new ArrayList<>(testCaseWorkers.size());
-            for (Future<TestCase> f : processedTestCases) {
-                TestCase testCase = f.get();
-                testCases.add(testCase);
-            }
-            testCases.sort(Comparator.naturalOrder());
-            for (TestCase t : testCases) {
-                t.println();
-            }
+            ArrayList<TestCase> testCases = acceptInput();
+            testCases.forEach(TestCase::process);
         } catch (Exception ex) {
             System.out.println("Exception while running solution :: " + ex.getMessage());
             ex.printStackTrace();
@@ -33,8 +17,8 @@ public class CandidateCode {
         }
     }
 
-    public static ArrayList<TestCaseWorker> acceptInput() throws Exception {
-        ArrayList<TestCaseWorker> testCases;
+    public static ArrayList<TestCase> acceptInput() throws Exception {
+        ArrayList<TestCase> testCases;
         try (Scanner scanner = new Scanner(System.in)) {
             String line = scanner.nextLine();
             int testCaseCount = Integer.parseInt(line);
@@ -63,9 +47,8 @@ public class CandidateCode {
                     teamGPowers.add(powerOfBB1);
                     teamOPowers.add(powerOfBB2);
                 }
-                TestCase testCase = new TestCase(i, memberCount, teamGPowers, teamOPowers);
-                TestCaseWorker testCaseWorker = new TestCaseWorker(testCase);
-                testCases.add(testCaseWorker);
+                TestCase testCase = new TestCase(memberCount, teamGPowers, teamOPowers);
+                testCases.add(testCase);
             }
             if (testCaseCount != testCases.size()) {
                 throw new Exception("Input contract violation :: testCaseCount should match the number of test-cases that follow");
@@ -74,15 +57,13 @@ public class CandidateCode {
         return testCases;
     }
 
-    private static final class TestCase implements Comparable<TestCase> {
-        private int srNum;
+    private static final class TestCase {
         private int memberCount;
         private int winCountPrediction;
         private ArrayList<Long> teamGPowers;
         private ArrayList<Long> teamOPowers;
 
-        public TestCase(int srNum, int memberCount, ArrayList<Long> teamGPowers, ArrayList<Long> teamOPowers) {
-            this.srNum = srNum;
+        public TestCase(int memberCount, ArrayList<Long> teamGPowers, ArrayList<Long> teamOPowers) {
             this.memberCount = memberCount;
             this.teamGPowers = teamGPowers;
             this.teamOPowers = teamOPowers;
@@ -91,6 +72,7 @@ public class CandidateCode {
 
         public void process() {
             optimize();
+            println();
         }
 
         public void println() {
@@ -100,12 +82,12 @@ public class CandidateCode {
         private void optimize() {
             teamGPowers.sort(Comparator.naturalOrder());
             teamOPowers.sort(Comparator.reverseOrder());
-            ArrayList<Integer> pastMatchedOpponents = new ArrayList<>(memberCount);
+            HashSet<Integer> pastMatchedOpponents = new HashSet<>(memberCount);
             for (int i = 0; i < memberCount; i++) {
                 long gPow = teamGPowers.get(i);
                 for (int j = 0; j < memberCount; j++) {
                     long oPow = teamOPowers.get(j);
-                    if (!pastMatchedOpponents.contains(j) && gPow > oPow) {
+                    if ((gPow > oPow) && !pastMatchedOpponents.contains(j)) {
                         pastMatchedOpponents.add(j);
                         winCountPrediction++;
                         break;
@@ -115,22 +97,26 @@ public class CandidateCode {
         }
 
         @Override
-        public int compareTo(TestCase testCase) {
-            return Integer.valueOf(this.srNum).compareTo(testCase.srNum);
-        }
-    }
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
 
-    private static final class TestCaseWorker implements Callable<TestCase> {
-        TestCase testCase;
+            TestCase testCase = (TestCase) o;
 
-        TestCaseWorker(TestCase testCase) {
-            this.testCase = testCase;
+            if (memberCount != testCase.memberCount) return false;
+            if (winCountPrediction != testCase.winCountPrediction) return false;
+            if (!Objects.equals(teamGPowers, testCase.teamGPowers))
+                return false;
+            return Objects.equals(teamOPowers, testCase.teamOPowers);
         }
 
         @Override
-        public TestCase call() {
-            testCase.process();
-            return testCase;
+        public int hashCode() {
+            int result = memberCount;
+            result = 31 * result + winCountPrediction;
+            result = 31 * result + (teamGPowers != null ? teamGPowers.hashCode() : 0);
+            result = 31 * result + (teamOPowers != null ? teamOPowers.hashCode() : 0);
+            return result;
         }
     }
 }
